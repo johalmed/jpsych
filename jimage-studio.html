@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jImage Studio</title>
+  <style>
+    :root {
+      --bg: #151a22;
+      --panel: #1e242e;
+      --panel-2: #252c38;
+      --header: #0f172a;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-soft: #1e3a8a;
+      --border: #334155;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --text: #e2e8f0;
+      --shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      --radius: 10px;
+    }
+
+    body[data-theme="light"] {
+      --bg: #edf2f7;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --muted: #475569;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --border: #d0d9e8;
+      --text: #0f172a;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+      background: radial-gradient(circle at top, #f8fafc 0%, #e2e8f0 60%);
+    }
+
+    body[data-theme="graphite"] {
+      --bg: #0f1115;
+      --panel: #1b1f27;
+      --panel-2: #222733;
+      --muted: #9aa8bc;
+      --accent: #60a5fa;
+      --accent-soft: #1e3a8a;
+      --border: #2e3646;
+      --text: #e5e7eb;
+      --shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+      background: radial-gradient(circle at top, #1a2230 0%, #0f1115 62%);
+    }
+
+    .stage.bg-solid {
+      background-image: none;
+      background: var(--stage-solid, #0b1220);
+    }
+
+    .stage.bg-subtle {
+      background-image:
+        linear-gradient(45deg, #1f2937 25%, transparent 25%),
+        linear-gradient(-45deg, #1f2937 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1f2937 75%),
+        linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+    }
+
+    body[data-theme="light"] .stage.bg-solid {
+      background: #dde5f1;
+    }
+
+    body[data-theme="light"] .stage.bg-subtle {
+      background-image:
+        linear-gradient(45deg, #dbe5f3 25%, transparent 25%),
+        linear-gradient(-45deg, #dbe5f3 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #dbe5f3 75%),
+        linear-gradient(-45deg, transparent 75%, #dbe5f3 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at top, #1c2430 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: 1fr;
+      height: 100vh;
+    }
+
+    header {
+      display: none !important;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 20px;
+      box-shadow: var(--shadow);
+      z-index: 2;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.06rem;
+      letter-spacing: 0.02em;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      min-height: 0;
+    }
+
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+
+    .sidebar-toolbar {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      background: #1f2937;
+      display: grid;
+      gap: 8px;
+    }
+
+    .sidebar-toolbar .small-btn-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .tab-row {
+      display: flex;
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+      background: #1f2937;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: #0b3aa2;
+    }
+
+    .tab-content {
+      padding: 14px;
+      overflow: auto;
+      min-height: 0;
+      display: none;
+      gap: 14px;
+      flex-direction: column;
+    }
+
+    .tab-content.active { display: flex; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 9px;
+    }
+
+    label { font-size: 0.84rem; color: var(--muted); }
+
+    .control {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .value-badge {
+      margin-left: auto;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #0b3aa2;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 999px;
+      background: #475569;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      background: var(--accent);
+      box-shadow: 0 1px 5px rgba(37, 99, 235, 0.55);
+      cursor: pointer;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 7px 9px;
+      font: inherit;
+      font-size: 0.82rem;
+      background: var(--panel);
+      color: var(--text);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 9px;
+      padding: 8px 11px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #334155;
+      color: var(--text);
+      transition: 0.15s;
+    }
+
+    button:hover:not(:disabled) { transform: translateY(-1px); }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: #1d4ed8;
+    }
+
+    button.ghost {
+      background: var(--panel);
+      border-color: #cbd5e1;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .workspace {
+      position: relative;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      min-width: 0;
+      min-height: 0;
+      padding: 16px;
+      gap: 10px;
+    }
+
+    .stage {
+      min-height: 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background-image:
+        linear-gradient(45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(-45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f1f5f9 75%),
+        linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
+      background-size: 26px 26px;
+      background-position: 0 0, 0 13px, 13px -13px, -13px 0;
+      display: grid;
+      place-items: center;
+      overflow: auto;
+      position: relative;
+      box-shadow: var(--shadow);
+    }
+
+    canvas {
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+      background: transparent;
+      max-width: 100%;
+      max-height: 100%;
+      image-rendering: auto;
+    }
+
+    .empty-state {
+      text-align: center;
+      max-width: 420px;
+      padding: 30px;
+      background: rgba(30,36,46,0.96);
+      border: 1px dashed #93c5fd;
+      border-radius: 16px;
+      color: #cbd5e1;
+    }
+
+    .drag-overlay {
+      position: absolute;
+      inset: 8px;
+      border: 2px dashed #3b82f6;
+      background: rgba(59,130,246,0.12);
+      border-radius: 14px;
+      display: none;
+      place-items: center;
+      color: #1d4ed8;
+      font-size: 1.15rem;
+      font-weight: 700;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .drag-overlay.active { display: grid; }
+
+    .status-bar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .palette-list {
+      display: grid;
+      gap: 8px;
+      max-height: 390px;
+      overflow: auto;
+    }
+
+    .palette-row {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+      background: #1f2937;
+    }
+
+    .palette-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 1px solid rgba(15,23,42,0.25);
+    }
+
+    .formula {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: #1f2937;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      padding: 6px;
+      line-height: 1.5;
+    }
+
+    .frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      margin: 0 2px;
+    }
+
+    .frac .bar {
+      width: 100%;
+      border-top: 1px solid #0f172a;
+      margin: 1px 0;
+    }
+
+    .error {
+      border: 1px solid #fecaca;
+      background: #fef2f2;
+      color: var(--danger);
+      border-radius: 8px;
+      padding: 7px;
+      font-size: 0.78rem;
+      display: none;
+      white-space: pre-wrap;
+    }
+
+    .error.active { display: block; }
+
+    .kernel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .small-btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .session-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+
+    .session-item {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .session-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .session-item label {
+      font-size: 0.72rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #a8b3c5;
+    }
+
+    .small-note {
+      font-size: 0.72rem;
+      color: #93a3ba;
+    }
+
+    @media (max-width: 700px) {
+      .session-grid { grid-template-columns: 1fr; }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { max-height: 56vh; }
+    }
+
+
+    .header-actions { display: none; }
+
+    .sidebar {
+      box-shadow: inset -1px 0 0 rgba(255,255,255,0.03);
+    }
+
+    .sidebar-toolbar {
+      background: #161d28;
+      border-bottom: 1px solid var(--border);
+      padding: 12px;
+    }
+
+    .tab-btn {
+      background: #111827;
+      color: #cbd5e1;
+      border-color: #374151;
+    }
+
+    .tab-btn.active {
+      border-color: #3b82f6;
+      background: #1d4ed8;
+      color: #eff6ff;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    .card {
+      background: #202834;
+      border-color: #334155;
+    }
+
+    .card h3 {
+      color: #f1f5f9;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .workspace {
+      background: #111827;
+      border-left: 1px solid #273244;
+    }
+
+    .stage {
+      border-color: #334155;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), var(--shadow);
+    }
+
+    .status-bar {
+      background: #18212d;
+      border-color: #334155;
+      color: #cbd5e1;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    textarea { border-color: #334155; }
+
+    .value-badge {
+      background: #1e3a8a;
+      border-color: #2563eb;
+      color: #dbeafe;
+    }
+
+    .palette-row {
+      background: #18212d;
+      border-color: #334155;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg,#2563eb,#1d4ed8);
+      color: #fff;
+    }
+
+    button.ghost {
+      background: #0f172a;
+      color: #cbd5e1;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 1120px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { max-height: 52vh; border-right: 0; border-bottom: 1px solid var(--border); }
+      .workspace { min-height: 48vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-title">🖼️ jImage Studio</div>
+      <div class="header-actions">
+        <button id="btnLoad" class="primary">📂 Load Image</button>
+        <input id="fileInput" type="file" accept="image/*" hidden>
+        <button id="btnUndo" class="ghost" disabled>↶ Undo</button>
+        <button id="btnRedo" class="ghost" disabled>↷ Redo</button>
+        <button id="btnResetAdjust" class="ghost" disabled>Reset Adjustments</button>
+        <button id="btnDefault" class="ghost" disabled>Default Look</button>
+        <button id="btnResetAll" class="ghost" disabled>✕ Reset All</button>
+        <button id="btnExport" class="primary" disabled>Render &amp; Save PNG</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-toolbar">
+          <button id="sBtnLoad" class="primary">📂 Load Image</button>
+          <div class="small-btn-row">
+            <button id="sBtnUndo" class="ghost" disabled>↶ Undo</button>
+            <button id="sBtnRedo" class="ghost" disabled>↷ Redo</button>
+            <button id="sBtnResetAdjust" class="ghost" disabled>⟲ Reset Adj</button>
+            <button id="sBtnDefault" class="ghost" disabled>◎ Default</button>
+            <button id="sBtnResetAll" class="ghost" disabled>✕ Reset All</button>
+            <button id="sBtnAutoPolish" class="primary" disabled>✨ Auto 12-Step</button>
+            <button id="sBtnExport" class="primary" disabled>⬇ Render & Save</button>
+          </div>
+        </div>
+        <div class="tab-row">
+          <button class="tab-btn active" data-tab="tab-basic">Basic</button>
+          <button class="tab-btn" data-tab="tab-palette">Palette</button>
+          <button class="tab-btn" data-tab="tab-filters">Filters</button>
+          <button class="tab-btn" data-tab="tab-shader">Shader</button>
+        </div>
+
+        <div id="tab-basic" class="tab-content active">
+          <section class="card">
+            <h3>Session</h3>
+            <div class="session-grid">
+              <div class="session-item">
+                <label>Export Size</label>
+                <select id="exportSize">
+                  <option value="original">Original</option>
+                  <option value="hd">1280×720 fit (HD)</option>
+                  <option value="1080p">1920×1080 fit (Full HD)</option>
+                  <option value="2k">2560×1440 fit (2K)</option>
+                  <option value="4k">3840×2160 fit (4K UHD)</option>
+                  <option value="8k">7680×4320 fit (8K UHD)</option>
+                </select>
+              </div>
+              <div class="session-item">
+                <label>Theme</label>
+                <select id="themeSelect" aria-label="Theme selector">
+                  <option value="dark">Dark Pro</option>
+                  <option value="graphite">Graphite</option>
+                  <option value="light">Light</option>
+                </select>
+              </div>
+              <div class="session-item">
+                <label>Background</label>
+                <select id="bgModeSelect" aria-label="Background mode selector">
+                  <option value="checker">Checkerboard</option>
+                  <option value="subtle">Subtle Grid</option>
+                  <option value="solid">Solid</option>
+                  <option value="ink">Deep Ink</option>
+                  <option value="paper">Print Paper</option>
+                </select>
+              </div>
+              <div class="session-item">
+                <label>Transparent Shade</label>
+                <select id="transparentShadeSelect" aria-label="Transparent background shade">
+                  <option value="auto">Auto Theme</option>
+                  <option value="dark">Dark Shade</option>
+                  <option value="mid">Mid Shade</option>
+                  <option value="light">Light Shade</option>
+                </select>
+              </div>
+              <div class="session-item full small-btn-row">
+                <button id="btnCopySettings" class="ghost">Copy Settings JSON</button>
+                <button id="btnPasteSettings" class="ghost">Paste Settings JSON</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Global Adjustments</h3>
+            <div class="control">
+              <div class="row"><label for="brightness">Brightness</label><span id="brightnessVal" class="value-badge">0</span></div>
+              <input id="brightness" type="range" min="-100" max="100" value="0" />
+            </div>
+            <div class="control">
+              <div class="row"><label for="contrast">Contrast</label><span id="contrastVal" class="value-badge">0</span></div>
+              <input id="contrast" type="range" min="-120" max="120" value="0" />
+              <div class="formula">
+                <i>F</i> =
+                <span class="frac"><span>259(<i>C</i> + 255)</span><span class="bar"></span><span>255(259 − <i>C</i>)</span></span>,
+                <i>R</i><sub>o</sub> = <i>F</i>(<i>R</i> − 128) + 128
+              </div>
+            </div>
+            <div class="control">
+              <div class="row"><label for="grayscale">Grayscale Blend</label><span id="grayscaleVal" class="value-badge">0%</span></div>
+              <input id="grayscale" type="range" min="0" max="100" value="0" />
+            </div>
+            <div class="control">
+              <div class="row"><label for="threshold">Binarization Threshold</label><span id="thresholdVal" class="value-badge">Off</span></div>
+              <input id="threshold" type="range" min="0" max="255" value="0" />
+            </div>
+          </section>
+        </div>
+
+        <div id="tab-palette" class="tab-content">
+          <section class="card">
+            <h3>Dominant Palette <span id="paletteCount" class="value-badge">0</span></h3>
+            <div class="control">
+              <div class="row"><label for="paletteSize">Palette Size</label><span id="paletteSizeVal" class="value-badge">6</span></div>
+              <input id="paletteSize" type="range" min="2" max="64" step="1" value="6" />
+            </div>
+            <div class="row">
+              <label><input id="paletteAbsoluteTransparency" type="checkbox" checked> Absolute Transparency (alpha = 0)</label>
+            </div>
+            <div class="formula">Distance = √((<i>R</i>−<i>r</i>)<sup>2</sup> + (<i>G</i>−<i>g</i>)<sup>2</sup> + (<i>B</i>−<i>b</i>)<sup>2</sup>)</div>
+            <div id="paletteList" class="palette-list"></div>
+          </section>
+        </div>
+
+        <div id="tab-filters" class="tab-content">
+          <section class="card">
+            <h3>Convolution 3×3</h3>
+            <div class="control">
+              <div class="row"><label>Preset</label>
+                <select id="kernelPreset">
+                  <option value="identity">Identity</option>
+                  <option value="gaussian">Gaussian Blur</option>
+                  <option value="edge">Edge Detect</option>
+                  <option value="emboss">Emboss</option>
+                  <option value="sharpen">Sharpen</option>
+                </select>
+              </div>
+            </div>
+            <div id="kernelGrid" class="kernel-grid"></div>
+            <div class="row">
+              <label>Divisor</label><input id="kernelDivisor" type="number" step="0.1" value="1" style="width:80px">
+              <label>Bias</label><input id="kernelBias" type="number" step="1" value="0" style="width:80px">
+            </div>
+            <div class="control">
+              <div class="row"><label>Box Blur Passes</label><span id="boxBlurVal" class="value-badge">0</span></div>
+              <input id="boxBlurPasses" type="range" min="0" max="4" value="0">
+            </div>
+            <div class="control">
+              <div class="row"><label>High-pass Crispiness</label><span id="crispVal" class="value-badge">0</span></div>
+              <input id="highPass" type="range" min="0" max="100" value="0">
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Edge-Preserving Blur</h3>
+            <div class="control">
+              <div class="row"><label>Method</label>
+                <select id="bilateralMethod">
+                  <option value="adaptive" selected>Adaptive Bilateral + Median</option>
+                  <option value="proxy">Proxy Bilateral</option>
+                </select>
+              </div>
+            </div>
+            <div class="control">
+              <div class="row"><label>Radius</label><span id="bilatRadiusVal" class="value-badge">1.5</span></div>
+              <input id="bilateralRadius" type="range" min="0" max="6" step="0.5" value="1.5">
+            </div>
+            <div class="control">
+              <div class="row"><label>Color Tolerance</label><span id="bilatTolVal" class="value-badge">35</span></div>
+              <input id="bilateralTolerance" type="range" min="0" max="150" step="1" value="35">
+            </div>
+          </section>
+
+
+          <section class="card">
+            <h3>Edge Pixel Growth</h3>
+            <div class="control">
+              <div class="row"><label>Iterations</label><span id="edgeGrowIterVal" class="value-badge">0</span></div>
+              <input id="edgeGrowIterations" type="range" min="0" max="6" step="1" value="0">
+            </div>
+            <div class="control">
+              <div class="row"><label>Similarity Tolerance</label><span id="edgeGrowTolVal" class="value-badge">28</span></div>
+              <input id="edgeGrowTolerance" type="range" min="0" max="150" step="1" value="28">
+            </div>
+            <div class="control">
+              <div class="row"><label>New Pixel Alpha</label><span id="edgeGrowAlphaVal" class="value-badge">80%</span></div>
+              <input id="edgeGrowAlpha" type="range" min="0" max="100" step="1" value="80">
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Graininess Decrease (Final)</h3>
+            <div class="control">
+              <div class="row"><label>Grain Removal Strength</label><span id="grainReduceVal" class="value-badge">0</span></div>
+              <input id="grainReduce" type="range" min="0" max="100" step="1" value="0">
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>jImage Polish (Bypass Pipeline)</h3>
+            <div class="control">
+              <label><input id="jImagePolishEnabled" type="checkbox"> Enable jImage Polish Only (bypass all other stages)</label>
+            </div>
+            <div class="control">
+              <div class="row"><label>Margin (px)</label><span id="jImageMarginVal" class="value-badge">8</span></div>
+              <input id="jImageMargin" type="range" min="0" max="120" step="1" value="8">
+            </div>
+            <div class="control">
+              <div class="row"><label>Neighborhood</label><span id="jImageKernelVal" class="value-badge">9</span></div>
+              <input id="jImageKernel" type="range" min="0" max="4" step="1" value="1">
+              <div class="small-note">Maps to 4, 9, 16, 25, 64 pixels</div>
+            </div>
+            <div class="control">
+              <div class="row"><label>Statistic</label>
+                <select id="jImageStatMode">
+                  <option value="mean">Mean</option>
+                  <option value="median">Median</option>
+                  <option value="mode">Mode</option>
+                </select>
+              </div>
+            </div>
+            <div class="control">
+              <div class="row"><label>Blend Strength</label><span id="jImageStrengthVal" class="value-badge">70%</span></div>
+              <input id="jImageStrength" type="range" min="0" max="100" step="1" value="70">
+            </div>
+          </section>
+        </div>
+
+        <div id="tab-shader" class="tab-content">
+          <section class="card">
+            <h3>Programmable Pixel Shader</h3>
+            <textarea id="shaderCode">return [r, g, b, a];</textarea>
+            <div class="small-btn-row">
+              <button id="btnApplyShader" class="primary">Compile Shader</button>
+              <button id="btnShaderReset" class="ghost">Reset Shader</button>
+              <button id="toggleBeforeAfter" class="ghost">Before/After: OFF</button>
+            </div>
+            <div id="shaderError" class="error"></div>
+          </section>
+        </div>
+      </aside>
+
+      <main class="workspace" id="workspace">
+        <div class="stage" id="stage">
+          <div class="drag-overlay" id="dragOverlay">Drop image to load</div>
+          <canvas id="previewCanvas" width="1" height="1" aria-label="Image preview canvas"></canvas>
+          <div id="emptyState" class="empty-state">
+            <h2>Start Creating</h2>
+            <p>Drop an image here or click <b>📂 Load Image</b> to begin editing in real-time.</p>
+          </div>
+        </div>
+        <div class="status-bar">
+          <span id="saveStatus">Session not saved yet.</span>
+          <span id="renderStatus">Idle</span>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const DEFAULT_SHADER = 'return [r, g, b, a];';
+      const KERNEL_PRESETS = {
+        identity: [0,0,0,0,1,0,0,0,0],
+        gaussian: [1,2,1,2,4,2,1,2,1],
+        edge: [-1,-1,-1,-1,8,-1,-1,-1,-1],
+        emboss: [-2,-1,0,-1,1,1,0,1,2],
+        sharpen: [0,-1,0,-1,5,-1,0,-1,0]
+      };
+
+      const el = {
+        fileInput: document.getElementById('fileInput'),
+        btnLoad: document.getElementById('btnLoad'),
+        btnUndo: document.getElementById('btnUndo'),
+        btnRedo: document.getElementById('btnRedo'),
+        btnResetAdjust: document.getElementById('btnResetAdjust'),
+        btnDefault: document.getElementById('btnDefault'),
+        btnResetAll: document.getElementById('btnResetAll'),
+        btnExport: document.getElementById('btnExport'),
+        sBtnLoad: document.getElementById('sBtnLoad'),
+        sBtnUndo: document.getElementById('sBtnUndo'),
+        sBtnRedo: document.getElementById('sBtnRedo'),
+        sBtnResetAdjust: document.getElementById('sBtnResetAdjust'),
+        sBtnDefault: document.getElementById('sBtnDefault'),
+        sBtnResetAll: document.getElementById('sBtnResetAll'),
+        sBtnAutoPolish: document.getElementById('sBtnAutoPolish'),
+        sBtnExport: document.getElementById('sBtnExport'),
+        previewCanvas: document.getElementById('previewCanvas'),
+        stage: document.getElementById('stage'),
+        workspace: document.getElementById('workspace'),
+        dragOverlay: document.getElementById('dragOverlay'),
+        emptyState: document.getElementById('emptyState'),
+        saveStatus: document.getElementById('saveStatus'),
+        renderStatus: document.getElementById('renderStatus'),
+        exportSize: document.getElementById('exportSize'),
+        themeSelect: document.getElementById('themeSelect'),
+        bgModeSelect: document.getElementById('bgModeSelect'),
+        transparentShadeSelect: document.getElementById('transparentShadeSelect'),
+        brightness: document.getElementById('brightness'),
+        contrast: document.getElementById('contrast'),
+        grayscale: document.getElementById('grayscale'),
+        threshold: document.getElementById('threshold'),
+        brightnessVal: document.getElementById('brightnessVal'),
+        contrastVal: document.getElementById('contrastVal'),
+        grayscaleVal: document.getElementById('grayscaleVal'),
+        thresholdVal: document.getElementById('thresholdVal'),
+        paletteList: document.getElementById('paletteList'),
+        paletteCount: document.getElementById('paletteCount'),
+        paletteAbsoluteTransparency: document.getElementById('paletteAbsoluteTransparency'),
+        paletteSize: document.getElementById('paletteSize'),
+        paletteSizeVal: document.getElementById('paletteSizeVal'),
+        kernelPreset: document.getElementById('kernelPreset'),
+        kernelGrid: document.getElementById('kernelGrid'),
+        kernelDivisor: document.getElementById('kernelDivisor'),
+        kernelBias: document.getElementById('kernelBias'),
+        boxBlurPasses: document.getElementById('boxBlurPasses'),
+        highPass: document.getElementById('highPass'),
+        boxBlurVal: document.getElementById('boxBlurVal'),
+        crispVal: document.getElementById('crispVal'),
+        bilateralMethod: document.getElementById('bilateralMethod'),
+        bilateralRadius: document.getElementById('bilateralRadius'),
+        bilateralTolerance: document.getElementById('bilateralTolerance'),
+        bilatRadiusVal: document.getElementById('bilatRadiusVal'),
+        bilatTolVal: document.getElementById('bilatTolVal'),
+        edgeGrowIterations: document.getElementById('edgeGrowIterations'),
+        edgeGrowTolerance: document.getElementById('edgeGrowTolerance'),
+        edgeGrowAlpha: document.getElementById('edgeGrowAlpha'),
+        edgeGrowIterVal: document.getElementById('edgeGrowIterVal'),
+        edgeGrowTolVal: document.getElementById('edgeGrowTolVal'),
+        edgeGrowAlphaVal: document.getElementById('edgeGrowAlphaVal'),
+        grainReduce: document.getElementById('grainReduce'),
+        grainReduceVal: document.getElementById('grainReduceVal'),
+        jImagePolishEnabled: document.getElementById('jImagePolishEnabled'),
+        jImageMargin: document.getElementById('jImageMargin'),
+        jImageKernel: document.getElementById('jImageKernel'),
+        jImageStatMode: document.getElementById('jImageStatMode'),
+        jImageStrength: document.getElementById('jImageStrength'),
+        jImageMarginVal: document.getElementById('jImageMarginVal'),
+        jImageKernelVal: document.getElementById('jImageKernelVal'),
+        jImageStrengthVal: document.getElementById('jImageStrengthVal'),
+        shaderCode: document.getElementById('shaderCode'),
+        btnApplyShader: document.getElementById('btnApplyShader'),
+        btnShaderReset: document.getElementById('btnShaderReset'),
+        shaderError: document.getElementById('shaderError'),
+        toggleBeforeAfter: document.getElementById('toggleBeforeAfter'),
+        btnCopySettings: document.getElementById('btnCopySettings'),
+        btnPasteSettings: document.getElementById('btnPasteSettings'),
+        tabButtons: Array.from(document.querySelectorAll('.tab-btn')),
+        tabContents: Array.from(document.querySelectorAll('.tab-content'))
+      };
+
+      const StateManager = {
+        state: {
+          image: null,
+          metadata: null,
+          sourceDataURL: '',
+          exportSize: 'original',
+          preview: { maxWidth: 900, zoomToFit: true },
+          global: { brightness: 0, contrast: 0, grayscale: 0, threshold: 0 },
+          paletteRules: [],
+          paletteExtraction: { count: 6, step: 32 },
+          paletteAbsoluteTransparency: true,
+          convolution: { kernel: KERNEL_PRESETS.identity.slice(), divisor: 1, bias: 0, preset: 'identity', boxBlurPasses: 0, highPass: 0 },
+          bilateral: { method: 'adaptive', radius: 1.5, tolerance: 35 },
+          edgeGrow: { iterations: 0, tolerance: 28, alpha: 80 },
+          grain: { reduce: 0 },
+          jImagePolish: { enabled: false, margin: 8, kernelIdx: 1, statMode: 'mean', strength: 70 },
+          shader: { code: DEFAULT_SHADER, enabled: true, error: '' },
+          ui: { beforeAfter: false, activeTab: 'tab-basic', theme: 'dark', bgMode: 'checker', transparentShade: 'auto', autoPipeline: [] }
+        },
+        set(path, value) {
+          const parts = path.split('.');
+          let ref = this.state;
+          for (let i = 0; i < parts.length - 1; i += 1) ref = ref[parts[i]];
+          ref[parts[parts.length - 1]] = value;
+        },
+        get(path) {
+          return path.split('.').reduce((acc, key) => acc && acc[key], this.state);
+        },
+        cloneState() {
+          return JSON.parse(JSON.stringify(this.state));
+        }
+      };
+
+      const HistoryManager = {
+        undoStack: [],
+        redoStack: [],
+        max: 40,
+        locked: false,
+        commit(reason = 'change') {
+          if (this.locked) return;
+          const snapshot = StateManager.cloneState();
+          this.undoStack.push(snapshot);
+          if (this.undoStack.length > this.max) this.undoStack.shift();
+          this.redoStack.length = 0;
+          UIController.updateHistoryButtons();
+          StorageManager.save(reason);
+        },
+        restore(snapshot) {
+          this.locked = true;
+          StateManager.state = snapshot;
+          UIController.syncUIFromState();
+          this.locked = false;
+          RenderEngine.schedulePreviewRender('history');
+        },
+        undo() {
+          if (this.undoStack.length <= 1) return;
+          const current = this.undoStack.pop();
+          this.redoStack.push(current);
+          this.restore(JSON.parse(JSON.stringify(this.undoStack[this.undoStack.length - 1])));
+          UIController.updateHistoryButtons();
+        },
+        redo() {
+          if (!this.redoStack.length) return;
+          const snap = this.redoStack.pop();
+          this.undoStack.push(JSON.parse(JSON.stringify(snap)));
+          this.restore(JSON.parse(JSON.stringify(snap)));
+          UIController.updateHistoryButtons();
+        }
+      };
+
+      const StorageManager = {
+        key: 'jimage-studio-session-v1',
+        backupKey: 'jimage-studio-backup-map-v1',
+        save(reason='autosave') {
+          try {
+            localStorage.setItem(this.key, JSON.stringify(StateManager.state));
+            const backup = {
+              timestamp: Date.now(),
+              reason,
+              hasImage: Boolean(StateManager.state.sourceDataURL),
+              instructions: 'Session backup for fluid processing. Restore from main key jimage-studio-session-v1 if available.',
+              map: {
+                pipeline: ['global','palette','convolution','boxBlur','highPass','edgePreserving','edgeGrow','shader','grain','jImagePolish'],
+                appearance: StateManager.state.ui,
+                backupImageBytes: (StateManager.state.sourceDataURL || '').length
+              }
+            };
+            localStorage.setItem(this.backupKey, JSON.stringify(backup));
+            UIController.setSaveStatus(`Saved (${reason}) @ ${new Date().toLocaleTimeString()}`);
+          } catch (e) {
+            UIController.setSaveStatus('Failed to save session.');
+          }
+        },
+        restore() {
+          const raw = localStorage.getItem(this.key);
+          if (!raw) return false;
+          try {
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object') return false;
+            StateManager.state = Object.assign(StateManager.state, parsed);
+            return true;
+          } catch (e) {
+            try {
+              const backupRaw = localStorage.getItem(this.backupKey);
+              if (backupRaw) {
+                const backup = JSON.parse(backupRaw);
+                UIController.setSaveStatus('Recovered backup map metadata; load image to continue.');
+              }
+            } catch (_) {}
+            console.warn('Corrupt storage; ignoring.', e);
+            return false;
+          }
+        }
+      };
+
+      const ColorEngine = {
+        clamp(v) { return v < 0 ? 0 : (v > 255 ? 255 : v); },
+        distance(r1, g1, b1, r2, g2, b2) {
+          const dr = r1 - r2; const dg = g1 - g2; const db = b1 - b2;
+          return Math.sqrt(dr * dr + dg * dg + db * db);
+        },
+        extractDominant(imageData, max = 16, step = 32) {
+          const bins = new Map();
+          const d = imageData.data;
+          for (let i = 0; i < d.length; i += 4) {
+            if (d[i + 3] === 0) continue;
+            const r = Math.floor(d[i] / step) * step;
+            const g = Math.floor(d[i + 1] / step) * step;
+            const b = Math.floor(d[i + 2] / step) * step;
+            const key = `${r},${g},${b}`;
+            bins.set(key, (bins.get(key) || 0) + 1);
+          }
+          return Array.from(bins.entries()).sort((a,b) => b[1]-a[1]).slice(0, max).map(([k]) => {
+            const [r,g,b] = k.split(',').map(Number);
+            return { source: [r,g,b], target: [r,g,b], tolerance: 40, active: false, transparent: false };
+          });
+        },
+        toHex([r, g, b]) {
+          return `#${[r, g, b].map(n => n.toString(16).padStart(2, '0')).join('')}`;
+        }
+      };
+
+      const FilterEngine = {
+        applyGlobal(data, global) {
+          const out = new Uint8ClampedArray(data);
+          const brightness = Number(global.brightness) || 0;
+          const C = Number(global.contrast) || 0;
+          const F = (259 * (C + 255)) / (255 * (259 - C));
+          const grayscale = (Number(global.grayscale) || 0) / 100;
+          const threshold = Number(global.threshold) || 0;
+          for (let i = 0; i < out.length; i += 4) {
+            if (out[i+3] === 0) continue;
+            let r = out[i] + brightness;
+            let g = out[i+1] + brightness;
+            let b = out[i+2] + brightness;
+            r = F * (r - 128) + 128;
+            g = F * (g - 128) + 128;
+            b = F * (b - 128) + 128;
+            const l = 0.299 * r + 0.587 * g + 0.114 * b;
+            r = r + (l - r) * grayscale;
+            g = g + (l - g) * grayscale;
+            b = b + (l - b) * grayscale;
+            if (threshold > 0) {
+              const bw = l >= threshold ? 255 : 0;
+              r = bw; g = bw; b = bw;
+            }
+            out[i] = ColorEngine.clamp(r);
+            out[i+1] = ColorEngine.clamp(g);
+            out[i+2] = ColorEngine.clamp(b);
+          }
+          return out;
+        },
+        applyPaletteRules(data, rules, absoluteTransparency = true) {
+          if (!rules || !rules.some(r => r.active)) return data;
+          const out = new Uint8ClampedArray(data);
+          for (let i = 0; i < out.length; i += 4) {
+            const a = out[i+3];
+            if (a === 0) continue;
+            let r = out[i], g = out[i+1], b = out[i+2], alpha = a;
+            for (const rule of rules) {
+              if (!rule.active) continue;
+              const [sr, sg, sb] = rule.source;
+              const d = ColorEngine.distance(r, g, b, sr, sg, sb);
+              const tol = Math.max(1, Number(rule.tolerance) || 1);
+              if (d <= tol) {
+                const blend = 1 - (d / tol);
+                r = r + (rule.target[0] - r) * blend;
+                g = g + (rule.target[1] - g) * blend;
+                b = b + (rule.target[2] - b) * blend;
+                if (rule.transparent) alpha = absoluteTransparency ? 0 : alpha * (1 - blend);
+              }
+            }
+            out[i] = ColorEngine.clamp(r);
+            out[i+1] = ColorEngine.clamp(g);
+            out[i+2] = ColorEngine.clamp(b);
+            out[i+3] = ColorEngine.clamp(alpha);
+          }
+          return out;
+        },
+        convolve3x3(data, width, height, kernel, divisor = 1, bias = 0) {
+          const src = data;
+          const out = new Uint8ClampedArray(src.length);
+          const div = divisor === 0 ? 1 : divisor;
+          for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+              const idx = (y * width + x) * 4;
+              const a = src[idx + 3];
+              if (a === 0) { out[idx + 3] = 0; continue; }
+              let rr = 0, gg = 0, bb = 0;
+              let k = 0;
+              for (let ky = -1; ky <= 1; ky += 1) {
+                const py = Math.min(height - 1, Math.max(0, y + ky));
+                for (let kx = -1; kx <= 1; kx += 1) {
+                  const px = Math.min(width - 1, Math.max(0, x + kx));
+                  const p = (py * width + px) * 4;
+                  const kv = kernel[k++];
+                  rr += src[p] * kv;
+                  gg += src[p + 1] * kv;
+                  bb += src[p + 2] * kv;
+                }
+              }
+              out[idx] = ColorEngine.clamp(rr / div + bias);
+              out[idx + 1] = ColorEngine.clamp(gg / div + bias);
+              out[idx + 2] = ColorEngine.clamp(bb / div + bias);
+              out[idx + 3] = a;
+            }
+          }
+          return out;
+        },
+        applyBoxBlurPasses(data, width, height, passes) {
+          let out = new Uint8ClampedArray(data);
+          const kernel = [1,1,1,1,1,1,1,1,1];
+          for (let i = 0; i < passes; i += 1) out = this.convolve3x3(out, width, height, kernel, 9, 0);
+          return out;
+        },
+        applyHighPass(data, width, height, amount) {
+          if (amount <= 0) return data;
+          const blurred = this.convolve3x3(data, width, height, [1,2,1,2,4,2,1,2,1], 16, 0);
+          const out = new Uint8ClampedArray(data.length);
+          const k = amount / 100;
+          for (let i = 0; i < data.length; i += 4) {
+            if (data[i+3] === 0) continue;
+            out[i] = ColorEngine.clamp(data[i] + (data[i] - blurred[i]) * k);
+            out[i+1] = ColorEngine.clamp(data[i+1] + (data[i+1] - blurred[i+1]) * k);
+            out[i+2] = ColorEngine.clamp(data[i+2] + (data[i+2] - blurred[i+2]) * k);
+            out[i+3] = data[i+3];
+          }
+          return out;
+        },
+        applyBilateralProxy(data, width, height, radius, tolerance) {
+          if (radius <= 0) return data;
+          const out = new Uint8ClampedArray(data.length);
+          const r = Math.ceil(radius);
+          const r2 = radius * radius;
+          for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+              const idx = (y * width + x) * 4;
+              const a = data[idx + 3];
+              if (a === 0) { out[idx + 3] = 0; continue; }
+              const cr = data[idx], cg = data[idx+1], cb = data[idx+2];
+              let rr = 0, gg = 0, bb = 0, count = 0;
+              for (let dy = -r; dy <= r; dy += 1) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= height) continue;
+                for (let dx = -r; dx <= r; dx += 1) {
+                  if (dx * dx + dy * dy > r2) continue;
+                  const xx = x + dx;
+                  if (xx < 0 || xx >= width) continue;
+                  const p = (yy * width + xx) * 4;
+                  if (data[p + 3] === 0) continue;
+                  const d = ColorEngine.distance(cr, cg, cb, data[p], data[p+1], data[p+2]);
+                  if (d < tolerance) {
+                    rr += data[p]; gg += data[p+1]; bb += data[p+2]; count += 1;
+                  }
+                }
+              }
+              if (count === 0) { out[idx] = cr; out[idx+1] = cg; out[idx+2] = cb; }
+              else {
+                out[idx] = ColorEngine.clamp(rr / count);
+                out[idx+1] = ColorEngine.clamp(gg / count);
+                out[idx+2] = ColorEngine.clamp(bb / count);
+              }
+              out[idx + 3] = a;
+            }
+          }
+          return out;
+        },
+        applyAdaptiveEdgePreserving(data, width, height, radius, tolerance) {
+          if (radius <= 0) return data;
+          const out = new Uint8ClampedArray(data.length);
+          const r = Math.ceil(radius);
+          const sigmaSpatial = Math.max(0.75, radius * 0.8);
+          const sigmaRange = Math.max(6, tolerance * 0.6);
+          for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+              const idx = (y * width + x) * 4;
+              const a = data[idx + 3];
+              if (a === 0) { out[idx + 3] = 0; continue; }
+              const cr = data[idx], cg = data[idx + 1], cb = data[idx + 2];
+              const neighR = [], neighG = [], neighB = [];
+              let wr = 0, wg = 0, wb = 0, wsum = 0;
+              for (let dy = -r; dy <= r; dy += 1) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= height) continue;
+                for (let dx = -r; dx <= r; dx += 1) {
+                  const xx = x + dx;
+                  if (xx < 0 || xx >= width) continue;
+                  const dist2 = dx * dx + dy * dy;
+                  if (dist2 > radius * radius) continue;
+                  const p = (yy * width + xx) * 4;
+                  if (data[p + 3] === 0) continue;
+                  const nr = data[p], ng = data[p + 1], nb = data[p + 2];
+                  const colorD = ColorEngine.distance(cr, cg, cb, nr, ng, nb);
+                  if (colorD > tolerance * 2.2) continue;
+                  const ws = Math.exp(-dist2 / (2 * sigmaSpatial * sigmaSpatial));
+                  const wrange = Math.exp(-(colorD * colorD) / (2 * sigmaRange * sigmaRange));
+                  const w = ws * wrange;
+                  wr += nr * w; wg += ng * w; wb += nb * w; wsum += w;
+                  neighR.push(nr); neighG.push(ng); neighB.push(nb);
+                }
+              }
+              if (wsum <= 0 || neighR.length < 3) {
+                out[idx] = cr; out[idx + 1] = cg; out[idx + 2] = cb; out[idx + 3] = a;
+                continue;
+              }
+              neighR.sort((a,b)=>a-b); neighG.sort((a,b)=>a-b); neighB.sort((a,b)=>a-b);
+              const m = Math.floor(neighR.length / 2);
+              const mr = neighR[m], mg = neighG[m], mb = neighB[m];
+              const br = wr / wsum, bg = wg / wsum, bb = wb / wsum;
+              const edgeProtect = Math.min(1, ColorEngine.distance(cr, cg, cb, br, bg, bb) / Math.max(1, tolerance));
+              const mix = 0.6 + edgeProtect * 0.25;
+              out[idx] = ColorEngine.clamp(br * (1 - mix) + mr * mix);
+              out[idx + 1] = ColorEngine.clamp(bg * (1 - mix) + mg * mix);
+              out[idx + 2] = ColorEngine.clamp(bb * (1 - mix) + mb * mix);
+              out[idx + 3] = a;
+            }
+          }
+          return out;
+        },
+        applyEdgePreserving(data, width, height, bilateral) {
+          const method = (bilateral && bilateral.method) || 'adaptive';
+          const radius = Number((bilateral && bilateral.radius) || 0);
+          const tolerance = Number((bilateral && bilateral.tolerance) || 35);
+          if (radius <= 0) return data;
+          if (method === 'proxy') return this.applyBilateralProxy(data, width, height, radius, tolerance);
+          return this.applyAdaptiveEdgePreserving(data, width, height, radius, tolerance);
+        },
+        growEdgePixels(data, width, height, iterations, tolerance, alphaPct) {
+          if (iterations <= 0) return data;
+          let src = new Uint8ClampedArray(data);
+          const alphaNew = ColorEngine.clamp((Number(alphaPct) || 0) * 2.55);
+          for (let pass = 0; pass < iterations; pass += 1) {
+            const out = new Uint8ClampedArray(src);
+            for (let y = 0; y < height; y += 1) {
+              for (let x = 0; x < width; x += 1) {
+                const idx = (y * width + x) * 4;
+                if (src[idx + 3] !== 0) continue;
+                let base = null;
+                let rr = 0, gg = 0, bb = 0, count = 0;
+                for (let dy = -1; dy <= 1; dy += 1) {
+                  const yy = y + dy;
+                  if (yy < 0 || yy >= height) continue;
+                  for (let dx = -1; dx <= 1; dx += 1) {
+                    if (dx === 0 && dy === 0) continue;
+                    const xx = x + dx;
+                    if (xx < 0 || xx >= width) continue;
+                    const p = (yy * width + xx) * 4;
+                    if (src[p + 3] === 0) continue;
+                    const nr = src[p], ng = src[p + 1], nb = src[p + 2];
+                    if (!base) base = [nr, ng, nb];
+                    const d = ColorEngine.distance(base[0], base[1], base[2], nr, ng, nb);
+                    if (d <= tolerance) {
+                      rr += nr; gg += ng; bb += nb; count += 1;
+                    }
+                  }
+                }
+                if (count > 0) {
+                  out[idx] = ColorEngine.clamp(rr / count);
+                  out[idx + 1] = ColorEngine.clamp(gg / count);
+                  out[idx + 2] = ColorEngine.clamp(bb / count);
+                  out[idx + 3] = alphaNew;
+                }
+              }
+            }
+            src = out;
+          }
+          return src;
+        },
+        estimateBackgroundColor(data, width, height) {
+          let r = 0, g = 0, b = 0, c = 0;
+          const sample = (x, y) => {
+            const i = (y * width + x) * 4;
+            if (data[i + 3] === 0) return;
+            r += data[i]; g += data[i + 1]; b += data[i + 2]; c += 1;
+          };
+          for (let x = 0; x < width; x += 1) { sample(x, 0); sample(x, Math.max(0, height - 1)); }
+          for (let y = 1; y < height - 1; y += 1) { sample(0, y); sample(Math.max(0, width - 1), y); }
+          if (c === 0) return [0, 0, 0];
+          return [r / c, g / c, b / c];
+        },
+        reduceGraininess(data, width, height, strength) {
+          if (strength <= 0) return data;
+          const src = new Uint8ClampedArray(data);
+          const out = new Uint8ClampedArray(src);
+          const bg = this.estimateBackgroundColor(src, width, height);
+          const blend = Math.min(1, strength / 100);
+          const outlierThreshold = Math.max(6, 38 - (strength * 0.28));
+          for (let y = 1; y < height - 1; y += 1) {
+            for (let x = 1; x < width - 1; x += 1) {
+              const i = (y * width + x) * 4;
+              if (src[i + 3] === 0) continue;
+              let rr = 0, gg = 0, bb = 0, n = 0;
+              for (let dy = -1; dy <= 1; dy += 1) {
+                for (let dx = -1; dx <= 1; dx += 1) {
+                  if (dx === 0 && dy === 0) continue;
+                  const p = ((y + dy) * width + (x + dx)) * 4;
+                  if (src[p + 3] === 0) continue;
+                  rr += src[p]; gg += src[p + 1]; bb += src[p + 2]; n += 1;
+                }
+              }
+              if (n === 0) continue;
+              const ar = rr / n, ag = gg / n, ab = bb / n;
+              const d = ColorEngine.distance(src[i], src[i + 1], src[i + 2], ar, ag, ab);
+              if (d >= outlierThreshold) {
+                const edgeBias = ColorEngine.distance(ar, ag, ab, bg[0], bg[1], bg[2]) < 40 ? 0.75 : 0.45;
+                const k = blend * edgeBias;
+                out[i] = ColorEngine.clamp(src[i] + (ar - src[i]) * k);
+                out[i + 1] = ColorEngine.clamp(src[i + 1] + (ag - src[i + 1]) * k);
+                out[i + 2] = ColorEngine.clamp(src[i + 2] + (ab - src[i + 2]) * k);
+              }
+            }
+          }
+          return out;
+        },
+        applyJImagePolish(data, width, height, polish) {
+          if (!polish || !polish.enabled) return data;
+          const kernelMap = [4, 9, 16, 25, 64];
+          const countTarget = kernelMap[Math.max(0, Math.min(kernelMap.length - 1, Number(polish.kernelIdx) || 0))];
+          const r = Math.max(1, Math.ceil((Math.sqrt(countTarget) - 1) / 2));
+          const margin = Math.max(0, Number(polish.margin) || 0);
+          const mode = polish.statMode || 'mean';
+          const blend = Math.max(0, Math.min(1, (Number(polish.strength) || 0) / 100));
+          const src = new Uint8ClampedArray(data);
+          const out = new Uint8ClampedArray(src);
+          for (let y = margin; y < height - margin; y += 1) {
+            for (let x = margin; x < width - margin; x += 1) {
+              const i = (y * width + x) * 4;
+              if (src[i + 3] === 0) continue;
+              const rs = [], gs = [], bs = [];
+              const rHist = Object.create(null), gHist = Object.create(null), bHist = Object.create(null);
+              for (let dy = -r; dy <= r; dy += 1) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= height) continue;
+                for (let dx = -r; dx <= r; dx += 1) {
+                  const xx = x + dx;
+                  if (xx < 0 || xx >= width) continue;
+                  const p = (yy * width + xx) * 4;
+                  if (src[p + 3] === 0) continue;
+                  const rv = src[p], gv = src[p+1], bv = src[p+2];
+                  rs.push(rv); gs.push(gv); bs.push(bv);
+                  rHist[rv] = (rHist[rv] || 0) + 1;
+                  gHist[gv] = (gHist[gv] || 0) + 1;
+                  bHist[bv] = (bHist[bv] || 0) + 1;
+                }
+              }
+              if (!rs.length) continue;
+              let tr, tg, tb;
+              if (mode === 'median') {
+                rs.sort((a,b)=>a-b); gs.sort((a,b)=>a-b); bs.sort((a,b)=>a-b);
+                const m = Math.floor(rs.length / 2);
+                tr = rs[m]; tg = gs[m]; tb = bs[m];
+              } else if (mode === 'mode') {
+                const topKey = (h) => Number(Object.keys(h).reduce((a,b)=> (h[a]||0) >= (h[b]||0) ? a : b));
+                tr = topKey(rHist); tg = topKey(gHist); tb = topKey(bHist);
+              } else {
+                tr = rs.reduce((a,b)=>a+b,0) / rs.length;
+                tg = gs.reduce((a,b)=>a+b,0) / gs.length;
+                tb = bs.reduce((a,b)=>a+b,0) / bs.length;
+              }
+              out[i] = ColorEngine.clamp(src[i] + (tr - src[i]) * blend);
+              out[i + 1] = ColorEngine.clamp(src[i+1] + (tg - src[i+1]) * blend);
+              out[i + 2] = ColorEngine.clamp(src[i+2] + (tb - src[i+2]) * blend);
+            }
+          }
+          return out;
+        },
+        applyShader(data, width, height, shaderFn) {
+          if (!shaderFn) return data;
+          const out = new Uint8ClampedArray(data);
+          for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+              const i = (y * width + x) * 4;
+              const a = out[i + 3];
+              if (a === 0) continue;
+              const res = shaderFn(out[i], out[i+1], out[i+2], a, x, y, width, height);
+              if (!Array.isArray(res) || res.length < 4) continue;
+              out[i] = ColorEngine.clamp(res[0]);
+              out[i+1] = ColorEngine.clamp(res[1]);
+              out[i+2] = ColorEngine.clamp(res[2]);
+              out[i+3] = ColorEngine.clamp(res[3]);
+            }
+          }
+          return out;
+        }
+      };
+
+      const ShaderEngine = {
+        compiled: null,
+        compile() {
+          const code = StateManager.get('shader.code');
+          try {
+            this.compiled = new Function('r','g','b','a','x','y','w','h', code);
+            StateManager.set('shader.error', '');
+            UIController.showShaderError('');
+            return true;
+          } catch (e) {
+            this.compiled = null;
+            StateManager.set('shader.error', String(e));
+            UIController.showShaderError(String(e));
+            return false;
+          }
+        }
+      };
+
+      const RenderEngine = {
+        ctx: el.previewCanvas.getContext('2d', { willReadFrequently: true }),
+        sourceCanvas: document.createElement('canvas'),
+        sourceCtx: null,
+        renderTimer: null,
+        previewTempCanvas: document.createElement('canvas'),
+        setStatus(t) { el.renderStatus.textContent = t; },
+        async loadImageDataURL(dataURL) {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error('Could not decode image.'));
+            img.src = dataURL;
+          });
+        },
+        async setImageFromDataURL(dataURL, commit = true) {
+          const img = await this.loadImageDataURL(dataURL);
+          StateManager.state.image = img;
+          StateManager.state.sourceDataURL = dataURL;
+          StateManager.state.metadata = { width: img.naturalWidth || img.width, height: img.naturalHeight || img.height, name: 'Loaded image' };
+          this.sourceCanvas.width = StateManager.state.metadata.width;
+          this.sourceCanvas.height = StateManager.state.metadata.height;
+          this.sourceCtx = this.sourceCanvas.getContext('2d', { willReadFrequently: true });
+          this.sourceCtx.clearRect(0,0,this.sourceCanvas.width,this.sourceCanvas.height);
+          this.sourceCtx.drawImage(img, 0, 0);
+          const sourceData = this.sourceCtx.getImageData(0,0,this.sourceCanvas.width,this.sourceCanvas.height);
+          StateManager.state.paletteRules = ColorEngine.extractDominant(sourceData, Number(StateManager.state.paletteExtraction.count) || 6, Number(StateManager.state.paletteExtraction.step) || 32);
+          UIController.populatePalette();
+          UIController.toggleHasImage(true);
+          if (commit) HistoryManager.commit('image-loaded');
+          this.schedulePreviewRender('image-loaded');
+        },
+        recreatePaletteFromSource() {
+          if (!this.sourceCtx || !this.sourceCanvas.width || !this.sourceCanvas.height) return;
+          const sourceData = this.sourceCtx.getImageData(0,0,this.sourceCanvas.width,this.sourceCanvas.height);
+          StateManager.state.paletteRules = ColorEngine.extractDominant(
+            sourceData,
+            Number(StateManager.state.paletteExtraction.count) || 6,
+            Number(StateManager.state.paletteExtraction.step) || 32
+          );
+          UIController.populatePalette();
+        },
+        schedulePreviewRender(reason='change') {
+          if (this.renderTimer) clearTimeout(this.renderTimer);
+          this.renderTimer = setTimeout(() => {
+            this.renderTimer = null;
+            this.renderPreview(reason);
+          }, 50);
+        },
+        processPipeline(imageData, width, height, before = false) {
+          let data = imageData.data;
+          if (!before) {
+            if (StateManager.state.jImagePolish && StateManager.state.jImagePolish.enabled) {
+              data = FilterEngine.applyJImagePolish(data, width, height, StateManager.state.jImagePolish);
+              data = FilterEngine.reduceGraininess(data, width, height, Math.max(30, Number(StateManager.state.grain.reduce) || 0));
+              return new ImageData(data, width, height);
+            }
+            data = FilterEngine.applyGlobal(data, StateManager.state.global);
+            data = FilterEngine.applyPaletteRules(data, StateManager.state.paletteRules, Boolean(StateManager.state.paletteAbsoluteTransparency));
+            data = FilterEngine.convolve3x3(
+              data,
+              width,
+              height,
+              StateManager.state.convolution.kernel,
+              Number(StateManager.state.convolution.divisor) || 1,
+              Number(StateManager.state.convolution.bias) || 0
+            );
+            data = FilterEngine.applyBoxBlurPasses(data, width, height, Number(StateManager.state.convolution.boxBlurPasses) || 0);
+            data = FilterEngine.applyHighPass(data, width, height, Number(StateManager.state.convolution.highPass) || 0);
+            data = FilterEngine.applyEdgePreserving(data, width, height, StateManager.state.bilateral);
+            data = FilterEngine.growEdgePixels(data, width, height, Number(StateManager.state.edgeGrow.iterations) || 0, Number(StateManager.state.edgeGrow.tolerance) || 28, Number(StateManager.state.edgeGrow.alpha) || 80);
+            if (StateManager.state.shader.enabled && ShaderEngine.compiled) data = FilterEngine.applyShader(data, width, height, ShaderEngine.compiled);
+            data = FilterEngine.reduceGraininess(data, width, height, Number(StateManager.state.grain.reduce) || 0);
+          }
+          return new ImageData(data, width, height);
+        },
+        renderPreview(reason='preview') {
+          if (!StateManager.state.image || !this.sourceCtx) return;
+          this.setStatus(`Rendering preview (${reason})...`);
+          const srcW = this.sourceCanvas.width;
+          const srcH = this.sourceCanvas.height;
+          const scale = srcW > StateManager.state.preview.maxWidth ? StateManager.state.preview.maxWidth / srcW : 1;
+          const w = Math.max(1, Math.round(srcW * scale));
+          const h = Math.max(1, Math.round(srcH * scale));
+          const temp = this.previewTempCanvas;
+          temp.width = w; temp.height = h;
+          const tctx = temp.getContext('2d', { willReadFrequently: true });
+          tctx.drawImage(this.sourceCanvas, 0, 0, w, h);
+          const src = tctx.getImageData(0,0,w,h);
+          const out = this.processPipeline(src, w, h, StateManager.state.ui.beforeAfter);
+          el.previewCanvas.width = w;
+          el.previewCanvas.height = h;
+          this.ctx.putImageData(out, 0, 0);
+          el.emptyState.style.display = 'none';
+          this.setStatus(`Preview ${w}×${h}`);
+          StorageManager.save('preview-render');
+        },
+        async renderForExport() {
+          if (!StateManager.state.image || !this.sourceCtx) return null;
+          this.setStatus('Full render in progress...');
+          const srcW = this.sourceCanvas.width;
+          const srcH = this.sourceCanvas.height;
+          let w = srcW, h = srcH;
+          const exportTargets = {
+            hd: [1280, 720],
+            '1080p': [1920, 1080],
+            '2k': [2560, 1440],
+            '4k': [3840, 2160],
+            '8k': [7680, 4320]
+          };
+          if (exportTargets[StateManager.state.exportSize]) {
+            const [tw, th] = exportTargets[StateManager.state.exportSize];
+            const fit = Math.min(tw / srcW, th / srcH);
+            w = Math.max(1, Math.round(srcW * fit));
+            h = Math.max(1, Math.round(srcH * fit));
+          }
+          const off = document.createElement('canvas');
+          off.width = w; off.height = h;
+          const offCtx = off.getContext('2d', { willReadFrequently: true });
+          offCtx.drawImage(this.sourceCanvas, 0, 0, w, h);
+          const src = offCtx.getImageData(0,0,w,h);
+          const out = this.processPipeline(src, w, h, false);
+          offCtx.putImageData(out,0,0);
+          this.setStatus(`Render ready ${w}×${h}`);
+          return off;
+        }
+      };
+
+      const FileManager = {
+        async handleFile(file) {
+          if (!file || !file.type.startsWith('image/')) {
+            alert('Please drop/select a valid image file.');
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = async (evt) => {
+            try {
+              await RenderEngine.setImageFromDataURL(String(evt.target.result), true);
+            } catch (e) {
+              alert('Failed to load image: ' + e.message);
+            }
+          };
+          reader.onerror = () => alert('Failed to read file.');
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const ExportEngine = {
+        async savePNG() {
+          const canvas = await RenderEngine.renderForExport();
+          if (!canvas) return;
+          const ts = new Date().toISOString().replace(/[:.]/g, '-');
+          const a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = `jimage-studio-${StateManager.state.exportSize}-${ts}.png`;
+          a.click();
+        }
+      };
+
+      const UIController = {
+        setSaveStatus(text) { el.saveStatus.textContent = text; },
+        applyAppearance() {
+          const theme = (StateManager.state.ui && StateManager.state.ui.theme) || 'dark';
+          const bgMode = (StateManager.state.ui && StateManager.state.ui.bgMode) || 'checker';
+          const transparentShade = (StateManager.state.ui && StateManager.state.ui.transparentShade) || 'auto';
+          document.body.setAttribute('data-theme', theme);
+          el.stage.classList.remove('bg-solid', 'bg-subtle');
+          if (bgMode === 'solid' || bgMode === 'ink' || bgMode === 'paper') el.stage.classList.add('bg-solid');
+          if (bgMode === 'subtle') el.stage.classList.add('bg-subtle');
+          const shadeMap = { dark: '#0b1220', mid: '#334155', light: '#dbe5f3' };
+          if (bgMode === 'ink') shadeMap.auto = '#060b14';
+          else if (bgMode === 'paper') shadeMap.auto = '#f1f5f9';
+          else shadeMap.auto = (theme === 'light') ? '#dde5f1' : '#0b1220';
+          el.stage.style.setProperty('--stage-solid', shadeMap[transparentShade] || shadeMap.auto);
+        },
+        showShaderError(text) {
+          el.shaderError.textContent = text;
+          el.shaderError.classList.toggle('active', Boolean(text));
+        },
+        updateHistoryButtons() {
+          const undoDisabled = HistoryManager.undoStack.length <= 1;
+          const redoDisabled = HistoryManager.redoStack.length === 0;
+          el.btnUndo.disabled = undoDisabled;
+          el.btnRedo.disabled = redoDisabled;
+          if (el.sBtnUndo) el.sBtnUndo.disabled = undoDisabled;
+          if (el.sBtnRedo) el.sBtnRedo.disabled = redoDisabled;
+        },
+        toggleHasImage(hasImage) {
+          [el.btnExport, el.btnResetAdjust, el.btnDefault, el.btnResetAll, el.sBtnUndo, el.sBtnRedo, el.sBtnResetAdjust, el.sBtnDefault, el.sBtnResetAll, el.sBtnAutoPolish, el.sBtnExport].forEach(b => b.disabled = !hasImage);
+          if (!hasImage) {
+            el.emptyState.style.display = 'block';
+            el.previewCanvas.width = 1;
+            el.previewCanvas.height = 1;
+            RenderEngine.ctx.clearRect(0,0,1,1);
+          }
+        },
+        populatePalette() {
+          el.paletteList.innerHTML = '';
+          const rules = StateManager.state.paletteRules || [];
+          el.paletteCount.textContent = String(rules.length);
+          rules.forEach((rule, i) => {
+            const row = document.createElement('div');
+            row.className = 'palette-row';
+            row.innerHTML = `
+              <div class="palette-top">
+                <input type="checkbox" data-k="active" ${rule.active ? 'checked' : ''}>
+                <span class="swatch" title="${ColorEngine.toHex(rule.source)}" style="background:${ColorEngine.toHex(rule.source)}"></span>
+                <small>${ColorEngine.toHex(rule.source)} / rgb(${rule.source.join(',')})</small>
+              </div>
+              <div class="row">
+                <label>Tolerance</label>
+                <input data-k="tolerance" type="range" min="0" max="150" value="${rule.tolerance}" style="flex:1">
+                <span class="value-badge">${rule.tolerance}</span>
+              </div>
+              <div class="row">
+                <label>Target</label>
+                <input data-k="target" type="color" value="${ColorEngine.toHex(rule.target)}">
+                <label><input data-k="transparent" type="checkbox" ${rule.transparent ? 'checked' : ''}> Transparent</label>
+              </div>
+            `;
+            row.querySelectorAll('input').forEach(inp => {
+              inp.addEventListener('input', () => {
+                const k = inp.dataset.k;
+                if (k === 'active') rule.active = inp.checked;
+                if (k === 'transparent') rule.transparent = inp.checked;
+                if (k === 'tolerance') {
+                  rule.tolerance = Number(inp.value);
+                  inp.parentElement.querySelector('.value-badge').textContent = inp.value;
+                }
+                if (k === 'target') {
+                  const hex = inp.value.replace('#', '');
+                  rule.target = [0,2,4].map(o => parseInt(hex.slice(o, o + 2), 16));
+                }
+                HistoryManager.commit('palette-rule');
+                RenderEngine.schedulePreviewRender('palette-rule');
+              });
+            });
+            el.paletteList.appendChild(row);
+          });
+        },
+        syncUIFromState() {
+          const s = StateManager.state;
+          el.exportSize.value = s.exportSize;
+          el.themeSelect.value = (s.ui && s.ui.theme) ? s.ui.theme : 'dark';
+          el.bgModeSelect.value = (s.ui && s.ui.bgMode) ? s.ui.bgMode : 'checker';
+          el.transparentShadeSelect.value = (s.ui && s.ui.transparentShade) ? s.ui.transparentShade : 'auto';
+          el.brightness.value = s.global.brightness;
+          el.contrast.value = s.global.contrast;
+          el.grayscale.value = s.global.grayscale;
+          el.threshold.value = s.global.threshold;
+          el.paletteSize.value = s.paletteExtraction && s.paletteExtraction.count ? s.paletteExtraction.count : 6;
+          el.paletteAbsoluteTransparency.checked = s.paletteAbsoluteTransparency !== false;
+          el.kernelPreset.value = s.convolution.preset;
+          el.kernelDivisor.value = s.convolution.divisor;
+          el.kernelBias.value = s.convolution.bias;
+          el.boxBlurPasses.value = s.convolution.boxBlurPasses;
+          el.highPass.value = s.convolution.highPass;
+          el.bilateralMethod.value = s.bilateral.method || 'adaptive';
+          el.bilateralRadius.value = s.bilateral.radius;
+          el.bilateralTolerance.value = s.bilateral.tolerance;
+          el.edgeGrowIterations.value = s.edgeGrow.iterations;
+          el.edgeGrowTolerance.value = s.edgeGrow.tolerance;
+          el.edgeGrowAlpha.value = s.edgeGrow.alpha;
+          el.grainReduce.value = s.grain ? s.grain.reduce : 0;
+          el.jImagePolishEnabled.checked = Boolean(s.jImagePolish && s.jImagePolish.enabled);
+          el.jImageMargin.value = s.jImagePolish ? s.jImagePolish.margin : 8;
+          el.jImageKernel.value = s.jImagePolish ? s.jImagePolish.kernelIdx : 1;
+          el.jImageStatMode.value = s.jImagePolish ? s.jImagePolish.statMode : 'mean';
+          el.jImageStrength.value = s.jImagePolish ? s.jImagePolish.strength : 70;
+          el.shaderCode.value = s.shader.code || DEFAULT_SHADER;
+          el.toggleBeforeAfter.textContent = `Before/After: ${s.ui.beforeAfter ? 'ON' : 'OFF'}`;
+          this.renderKernelInputs();
+          this.updateReadouts();
+          this.populatePalette();
+          this.showShaderError(s.shader.error || '');
+          this.switchTab(s.ui.activeTab || 'tab-basic');
+          this.applyAppearance();
+          this.toggleHasImage(Boolean(s.sourceDataURL));
+        },
+        updateReadouts() {
+          el.brightnessVal.textContent = el.brightness.value;
+          el.contrastVal.textContent = el.contrast.value;
+          el.grayscaleVal.textContent = `${el.grayscale.value}%`;
+          el.thresholdVal.textContent = Number(el.threshold.value) === 0 ? 'Off' : el.threshold.value;
+          el.paletteSizeVal.textContent = el.paletteSize.value;
+          el.boxBlurVal.textContent = el.boxBlurPasses.value;
+          el.crispVal.textContent = el.highPass.value;
+          el.bilatRadiusVal.textContent = Number(el.bilateralRadius.value).toFixed(1);
+          el.bilatTolVal.textContent = el.bilateralTolerance.value;
+          el.edgeGrowIterVal.textContent = el.edgeGrowIterations.value;
+          el.edgeGrowTolVal.textContent = el.edgeGrowTolerance.value;
+          el.edgeGrowAlphaVal.textContent = `${el.edgeGrowAlpha.value}%`;
+          el.grainReduceVal.textContent = el.grainReduce.value;
+          const kernelMap = [4, 9, 16, 25, 64];
+          const kernelIdx = Math.max(0, Math.min(kernelMap.length - 1, Number(el.jImageKernel.value) || 0));
+          el.jImageMarginVal.textContent = el.jImageMargin.value;
+          el.jImageKernelVal.textContent = kernelMap[kernelIdx];
+          el.jImageStrengthVal.textContent = `${el.jImageStrength.value}%`;
+        },
+        renderKernelInputs() {
+          el.kernelGrid.innerHTML = '';
+          StateManager.state.convolution.kernel.forEach((v, idx) => {
+            const input = document.createElement('input');
+            input.type = 'number'; input.step = '0.1'; input.value = String(v);
+            input.addEventListener('input', () => {
+              StateManager.state.convolution.kernel[idx] = Number(input.value) || 0;
+              HistoryManager.commit('kernel-edit');
+              RenderEngine.schedulePreviewRender('kernel-edit');
+            });
+            el.kernelGrid.appendChild(input);
+          });
+        },
+        switchTab(id) {
+          StateManager.state.ui.activeTab = id;
+          el.tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === id));
+          el.tabContents.forEach(tab => tab.classList.toggle('active', tab.id === id));
+        },
+        applyAuto12StepPolish() {
+          if (!StateManager.state.sourceDataURL) return;
+          const st = StateManager.state;
+          st.global = { brightness: 8, contrast: 18, grayscale: 0, threshold: 0 };
+          st.paletteAbsoluteTransparency = true;
+          st.convolution = { kernel: KERNEL_PRESETS.sharpen.slice(), divisor: 1, bias: 0, preset: 'sharpen', boxBlurPasses: 1, highPass: 22 };
+          st.bilateral = { method: 'adaptive', radius: 2.5, tolerance: 42 };
+          st.edgeGrow = { iterations: 2, tolerance: 26, alpha: 100 };
+          st.grain = { reduce: 64 };
+          st.jImagePolish = { enabled: true, margin: 10, kernelIdx: 3, statMode: 'median', strength: 82 };
+
+          if (Array.isArray(st.paletteRules) && st.paletteRules.length) {
+            st.paletteRules.forEach(rule => {
+              rule.active = false;
+              rule.transparent = false;
+              rule.target = [...rule.source];
+              rule.tolerance = 40;
+            });
+            // step for transparency isolation: make dominant bright bucket transparent
+            const brightRule = st.paletteRules
+              .map((r, i) => ({ i, v: r.source[0] + r.source[1] + r.source[2] }))
+              .sort((a, b) => b.v - a.v)[0];
+            if (brightRule) {
+              const rr = st.paletteRules[brightRule.i];
+              rr.active = true;
+              rr.transparent = true;
+              rr.tolerance = 52;
+              rr.target = [...rr.source];
+            }
+          }
+
+          // 12-step narrative checkpoint stored as instruction map for fluid reproducibility
+          st.ui.autoPipeline = [
+            'brightness-normalize', 'contrast-lift', 'palette-extract', 'absolute-transparency',
+            'adaptive-edge-preserve', 'box-blur-pass', 'high-pass-crisp', 'edge-grow',
+            'jimage-polish-enable', 'jimage-neighborhood-median', 'grain-reduce', 'final-render'
+          ];
+
+          this.syncUIFromState();
+          HistoryManager.commit('auto-12-step');
+          RenderEngine.schedulePreviewRender('auto-12-step');
+        },
+        bind() {
+          el.btnLoad.addEventListener('click', () => el.fileInput.click());
+          el.sBtnLoad.addEventListener('click', () => el.fileInput.click());
+          el.fileInput.addEventListener('change', (e) => FileManager.handleFile(e.target.files[0]));
+          ['dragenter', 'dragover'].forEach(evt => el.workspace.addEventListener(evt, (e) => {
+            e.preventDefault();
+            el.dragOverlay.classList.add('active');
+          }));
+          ['dragleave', 'drop'].forEach(evt => el.workspace.addEventListener(evt, (e) => {
+            e.preventDefault();
+            if (evt === 'drop') {
+              const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+              if (file) FileManager.handleFile(file);
+            }
+            el.dragOverlay.classList.remove('active');
+          }));
+
+          el.btnUndo.addEventListener('click', () => HistoryManager.undo());
+          el.btnRedo.addEventListener('click', () => HistoryManager.redo());
+          el.sBtnUndo.addEventListener('click', () => HistoryManager.undo());
+          el.sBtnRedo.addEventListener('click', () => HistoryManager.redo());
+          const handleResetAdjust = () => {
+            StateManager.state.global = { brightness:0, contrast:0, grayscale:0, threshold:0 };
+            this.syncUIFromState();
+            HistoryManager.commit('reset-adjustments');
+            RenderEngine.schedulePreviewRender('reset-adjustments');
+          };
+          el.btnResetAdjust.addEventListener('click', handleResetAdjust);
+          el.sBtnResetAdjust.addEventListener('click', handleResetAdjust);
+
+          const handleDefaultLook = async () => {
+            const img = StateManager.state.sourceDataURL;
+            if (!img) return;
+            StateManager.state.global = { brightness:0, contrast:0, grayscale:0, threshold:0 };
+            StateManager.state.convolution = { kernel: KERNEL_PRESETS.identity.slice(), divisor:1, bias:0, preset:'identity', boxBlurPasses:0, highPass:0 };
+            StateManager.state.bilateral = { method:'adaptive', radius:1.5, tolerance:35 };
+            StateManager.state.paletteAbsoluteTransparency = true;
+            StateManager.state.shader = { code: DEFAULT_SHADER, enabled:true, error:'' };
+            StateManager.state.grain = { reduce:0 };
+            StateManager.state.jImagePolish = { enabled:false, margin:8, kernelIdx:1, statMode:'mean', strength:70 };
+            StateManager.state.ui.beforeAfter = false;
+            StateManager.state.ui.bgMode = 'checker';
+            StateManager.state.ui.transparentShade = 'auto';
+            await RenderEngine.setImageFromDataURL(img, false);
+            StateManager.state.paletteRules = StateManager.state.paletteRules.map(rule => ({ ...rule, active: false, transparent: false, target: [...rule.source], tolerance: 40 }));
+            this.syncUIFromState();
+            ShaderEngine.compile();
+            HistoryManager.commit('default-look');
+            RenderEngine.schedulePreviewRender('default-look');
+          };
+          el.btnDefault.addEventListener('click', handleDefaultLook);
+          el.sBtnDefault.addEventListener('click', handleDefaultLook);
+
+          const handleResetAll = async () => {
+            const img = StateManager.state.sourceDataURL;
+            StateManager.state.global = { brightness:0, contrast:0, grayscale:0, threshold:0 };
+            StateManager.state.convolution = { kernel: KERNEL_PRESETS.identity.slice(), divisor:1, bias:0, preset:'identity', boxBlurPasses:0, highPass:0 };
+            StateManager.state.bilateral = { method:'adaptive', radius:1.5, tolerance:35 };
+            StateManager.state.paletteAbsoluteTransparency = true;
+            StateManager.state.shader = { code: DEFAULT_SHADER, enabled:true, error:'' };
+            StateManager.state.grain = { reduce:0 };
+            StateManager.state.jImagePolish = { enabled:false, margin:8, kernelIdx:1, statMode:'mean', strength:70 };
+            StateManager.state.ui.bgMode = 'checker';
+            StateManager.state.ui.transparentShade = 'auto';
+            if (img) await RenderEngine.setImageFromDataURL(img, false);
+            this.syncUIFromState();
+            ShaderEngine.compile();
+            HistoryManager.commit('reset-all');
+            RenderEngine.schedulePreviewRender('reset-all');
+          };
+          el.btnResetAll.addEventListener('click', handleResetAll);
+          el.sBtnResetAll.addEventListener('click', handleResetAll);
+
+          [el.brightness, el.contrast, el.grayscale, el.threshold].forEach(input => {
+            input.addEventListener('input', () => {
+              StateManager.state.global[input.id] = Number(input.value);
+              this.updateReadouts();
+              HistoryManager.commit(`global-${input.id}`);
+              RenderEngine.schedulePreviewRender(input.id);
+            });
+          });
+
+          el.paletteAbsoluteTransparency.addEventListener('change', () => {
+            StateManager.state.paletteAbsoluteTransparency = el.paletteAbsoluteTransparency.checked;
+            HistoryManager.commit('palette-abs-transparency');
+            RenderEngine.schedulePreviewRender('palette-abs-transparency');
+          });
+
+          el.paletteSize.addEventListener('input', () => {
+            StateManager.state.paletteExtraction.count = Number(el.paletteSize.value);
+            this.updateReadouts();
+            RenderEngine.recreatePaletteFromSource();
+            HistoryManager.commit('palette-size');
+            RenderEngine.schedulePreviewRender('palette-size');
+          });
+
+          el.exportSize.addEventListener('change', () => {
+            StateManager.state.exportSize = el.exportSize.value;
+            HistoryManager.commit('export-size');
+          });
+
+          el.themeSelect.addEventListener('change', () => {
+            StateManager.state.ui.theme = el.themeSelect.value;
+            this.applyAppearance();
+            HistoryManager.commit('theme-change');
+          });
+
+          el.bgModeSelect.addEventListener('change', () => {
+            StateManager.state.ui.bgMode = el.bgModeSelect.value;
+            this.applyAppearance();
+            HistoryManager.commit('bgmode-change');
+          });
+
+          el.transparentShadeSelect.addEventListener('change', () => {
+            StateManager.state.ui.transparentShade = el.transparentShadeSelect.value;
+            this.applyAppearance();
+            HistoryManager.commit('transparent-shade-change');
+          });
+
+          el.kernelPreset.addEventListener('change', () => {
+            const p = el.kernelPreset.value;
+            StateManager.state.convolution.preset = p;
+            StateManager.state.convolution.kernel = KERNEL_PRESETS[p].slice();
+            StateManager.state.convolution.divisor = (p === 'gaussian') ? 16 : 1;
+            StateManager.state.convolution.bias = 0;
+            this.renderKernelInputs();
+            HistoryManager.commit('kernel-preset');
+            RenderEngine.schedulePreviewRender('kernel-preset');
+          });
+
+          [el.kernelDivisor, el.kernelBias].forEach(inp => ['input','change'].forEach(evtName => inp.addEventListener(evtName, () => {
+            const v = Number(inp.value);
+            if (!Number.isFinite(v)) return;
+            StateManager.state.convolution[inp.id === 'kernelDivisor' ? 'divisor' : 'bias'] = v;
+            HistoryManager.commit(inp.id);
+            RenderEngine.schedulePreviewRender(inp.id);
+          })));
+
+          el.bilateralMethod.addEventListener('change', () => {
+            StateManager.state.bilateral.method = el.bilateralMethod.value;
+            HistoryManager.commit('bilateralMethod');
+            RenderEngine.schedulePreviewRender('bilateralMethod');
+          });
+
+          [el.boxBlurPasses, el.highPass, el.bilateralRadius, el.bilateralTolerance, el.edgeGrowIterations, el.edgeGrowTolerance, el.edgeGrowAlpha, el.grainReduce, el.jImageMargin, el.jImageKernel, el.jImageStrength].forEach(inp => ['input','change'].forEach(evtName => inp.addEventListener(evtName, () => {
+            const map = {
+              boxBlurPasses: ['convolution', 'boxBlurPasses'],
+              highPass: ['convolution', 'highPass'],
+              bilateralRadius: ['bilateral', 'radius'],
+              bilateralTolerance: ['bilateral', 'tolerance'],
+              edgeGrowIterations: ['edgeGrow', 'iterations'],
+              edgeGrowTolerance: ['edgeGrow', 'tolerance'],
+              edgeGrowAlpha: ['edgeGrow', 'alpha'],
+              grainReduce: ['grain', 'reduce'],
+              jImageMargin: ['jImagePolish', 'margin'],
+              jImageKernel: ['jImagePolish', 'kernelIdx'],
+              jImageStrength: ['jImagePolish', 'strength']
+            };
+            const [a,b] = map[inp.id];
+            StateManager.state[a][b] = Number(inp.value);
+            this.updateReadouts();
+            HistoryManager.commit(inp.id);
+            RenderEngine.schedulePreviewRender(inp.id);
+          })));
+
+          el.jImagePolishEnabled.addEventListener('change', () => {
+            StateManager.state.jImagePolish.enabled = el.jImagePolishEnabled.checked;
+            this.updateReadouts();
+            HistoryManager.commit('jimage-polish-enabled');
+            RenderEngine.schedulePreviewRender('jimage-polish-enabled');
+          });
+
+          el.jImageStatMode.addEventListener('change', () => {
+            StateManager.state.jImagePolish.statMode = el.jImageStatMode.value;
+            HistoryManager.commit('jimage-stat-mode');
+            RenderEngine.schedulePreviewRender('jimage-stat-mode');
+          });
+
+          el.btnApplyShader.addEventListener('click', () => {
+            StateManager.state.shader.code = el.shaderCode.value;
+            if (ShaderEngine.compile()) {
+              HistoryManager.commit('shader-compiled');
+              RenderEngine.schedulePreviewRender('shader');
+            }
+          });
+
+          el.btnShaderReset.addEventListener('click', () => {
+            el.shaderCode.value = DEFAULT_SHADER;
+            StateManager.state.shader.code = DEFAULT_SHADER;
+            ShaderEngine.compile();
+            HistoryManager.commit('shader-reset');
+            RenderEngine.schedulePreviewRender('shader-reset');
+          });
+
+          el.toggleBeforeAfter.addEventListener('click', () => {
+            StateManager.state.ui.beforeAfter = !StateManager.state.ui.beforeAfter;
+            el.toggleBeforeAfter.textContent = `Before/After: ${StateManager.state.ui.beforeAfter ? 'ON' : 'OFF'}`;
+            HistoryManager.commit('before-after');
+            RenderEngine.schedulePreviewRender('before-after');
+          });
+
+          el.btnExport.addEventListener('click', () => ExportEngine.savePNG());
+          el.sBtnExport.addEventListener('click', () => ExportEngine.savePNG());
+          el.sBtnAutoPolish.addEventListener('click', () => this.applyAuto12StepPolish());
+
+          el.btnCopySettings.addEventListener('click', async () => {
+            const json = JSON.stringify({
+              exportSize: StateManager.state.exportSize,
+              global: StateManager.state.global,
+              paletteRules: StateManager.state.paletteRules,
+              paletteAbsoluteTransparency: StateManager.state.paletteAbsoluteTransparency,
+              convolution: StateManager.state.convolution,
+              bilateral: StateManager.state.bilateral,
+              edgeGrow: StateManager.state.edgeGrow,
+              grain: StateManager.state.grain,
+              jImagePolish: StateManager.state.jImagePolish,
+              shader: StateManager.state.shader,
+              ui: StateManager.state.ui
+            }, null, 2);
+            await navigator.clipboard.writeText(json).catch(() => prompt('Copy settings JSON:', json));
+          });
+
+          el.btnPasteSettings.addEventListener('click', async () => {
+            const src = prompt('Paste settings JSON:');
+            if (!src) return;
+            try {
+              const parsed = JSON.parse(src);
+              if (parsed.global) StateManager.state.global = parsed.global;
+              if (parsed.paletteRules) StateManager.state.paletteRules = parsed.paletteRules;
+              if (typeof parsed.paletteAbsoluteTransparency === 'boolean') StateManager.state.paletteAbsoluteTransparency = parsed.paletteAbsoluteTransparency;
+              if (parsed.convolution) StateManager.state.convolution = parsed.convolution;
+              if (parsed.bilateral) StateManager.state.bilateral = parsed.bilateral;
+              if (parsed.edgeGrow) StateManager.state.edgeGrow = parsed.edgeGrow;
+              if (parsed.grain) StateManager.state.grain = parsed.grain;
+              if (parsed.jImagePolish) StateManager.state.jImagePolish = parsed.jImagePolish;
+              if (parsed.shader) StateManager.state.shader = parsed.shader;
+              if (parsed.ui) StateManager.state.ui = Object.assign(StateManager.state.ui, parsed.ui);
+              if (parsed.exportSize) StateManager.state.exportSize = parsed.exportSize;
+              this.syncUIFromState();
+              ShaderEngine.compile();
+              HistoryManager.commit('paste-settings');
+              RenderEngine.schedulePreviewRender('paste-settings');
+            } catch (e) {
+              alert('Invalid JSON');
+            }
+          });
+
+          el.tabButtons.forEach(btn => btn.addEventListener('click', () => {
+            this.switchTab(btn.dataset.tab);
+            HistoryManager.commit('tab-switch');
+          }));
+
+          window.addEventListener('keydown', (e) => {
+            const ctrl = e.ctrlKey || e.metaKey;
+            if (ctrl && e.key.toLowerCase() === 'z') { e.preventDefault(); HistoryManager.undo(); }
+            if (ctrl && e.key.toLowerCase() === 'y') { e.preventDefault(); HistoryManager.redo(); }
+          });
+
+          // Robust slider delegation fallback to ensure all sliders remain responsive.
+          document.addEventListener('input', (evt) => {
+            const t = evt.target;
+            if (!t || !t.id) return;
+            const id = t.id;
+            if (id === 'brightness' || id === 'contrast' || id === 'grayscale' || id === 'threshold') {
+              StateManager.state.global[id] = Number(t.value);
+              this.updateReadouts();
+              RenderEngine.schedulePreviewRender(`delegated-${id}`);
+              return;
+            }
+            if (id === 'paletteSize') {
+              StateManager.state.paletteExtraction.count = Number(t.value);
+              this.updateReadouts();
+              RenderEngine.recreatePaletteFromSource();
+              RenderEngine.schedulePreviewRender('delegated-palette-size');
+              return;
+            }
+            if (id === 'jImageKernel' || id === 'jImageMargin' || id === 'jImageStrength') {
+              const map = { jImageKernel: 'kernelIdx', jImageMargin: 'margin', jImageStrength: 'strength' };
+              StateManager.state.jImagePolish[map[id]] = Number(t.value);
+              this.updateReadouts();
+              RenderEngine.schedulePreviewRender(`delegated-${id}`);
+            }
+          });
+        }
+      };
+
+      (async function init() {
+        UIController.bind();
+        UIController.renderKernelInputs();
+        UIController.updateReadouts();
+        ShaderEngine.compile();
+
+        const restored = StorageManager.restore();
+        UIController.syncUIFromState();
+        ShaderEngine.compile();
+
+        if (restored && StateManager.state.sourceDataURL) {
+          try {
+            await RenderEngine.setImageFromDataURL(StateManager.state.sourceDataURL, false);
+            UIController.syncUIFromState();
+          } catch (e) {
+            UIController.setSaveStatus('Saved session invalid, please load an image.');
+          }
+        }
+        HistoryManager.commit('init');
+      })();
+    })();
+  </script>
+</body>
+</html>
