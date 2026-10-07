@@ -1,0 +1,4 @@
+#include "PluginEditor.h"
+jAudioMathMIDIEditor::jAudioMathMIDIEditor(jAudioMathMIDIProcessor&x):AudioProcessorEditor(&x),p(x){setSize(520,220);logo.setText("jAudio  •  MATH MIDI",juce::dontSendNotification);logo.setFont(juce::Font(24.f,juce::Font::bold));addAndMakeVisible(logo);formula.setText(p.getFormula(),false);formula.setFont(juce::Font(16));addAndMakeVisible(formula);apply.setButtonText("APPLY");apply.onClick=[this]{p.setFormula(formula.getText());};addAndMakeVisible(apply);}
+void jAudioMathMIDIEditor::paint(juce::Graphics&g){g.fillAll(juce::Colour(0xff0d0f12));g.setColour(juce::Colour(0xff7c5cff));g.fillRoundedRectangle(12,12,496,196,12,12);g.setColour(juce::Colours::white);g.setFont(14);g.drawText("Formula → MIDI notes",24,62,250,24,juce::Justification::left);}
+void jAudioMathMIDIEditor::resized(){logo.setBounds(24,24,360,30);formula.setBounds(24,92,400,48);apply.setBounds(432,92,64,48);}
