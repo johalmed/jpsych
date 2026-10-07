@@ -1,0 +1,8 @@
+#include "PluginProcessor.h"
+#include "PluginEditor.h"
+jAudioMathMIDIProcessor::jAudioMathMIDIProcessor():AudioProcessor(BusesProperties()){}
+void jAudioMathMIDIProcessor::prepareToPlay(double s,int){sr=s;step=0;lastNote=-1;}
+void jAudioMathMIDIProcessor::processBlock(juce::AudioBuffer<float>&a,juce::MidiBuffer&m){a.clear();auto*ph=getPlayHead();auto po=ph?ph->getPosition():std::nullopt;if(!po||!po->getIsPlaying()){if(lastNote>=0)m.addEvent(juce::MidiMessage::noteOff(1,lastNote),0),lastNote=-1;return;}double bpmNow=po->getBpm().value_or(bpm),ppq=po->getPpqPosition().value_or(0),beat=.25,current=std::floor(ppq/beat);if(current>=step){double y=formula.eval(current,current/64.0,lastNote<0?60:lastNote,juce::Random::getSystemRandom().nextDouble(),std::floor(current/4),lastNote<0?60:lastNote,velocity);int note=juce::jlimit(0,127,(int)std::llround(y));if(quantize){static const int sc[]={0,2,4,5,7,9,11};int pc=note%12,best=sc[0];for(int q:sc)if(std::abs(q-pc)<std::abs(best-pc))best=q;note+=best-pc;}if(lastNote>=0)m.addEvent(juce::MidiMessage::noteOff(1,lastNote),0);m.addEvent(juce::MidiMessage::noteOn(1,note,(juce::uint8)velocity),0);lastNote=note;step=(int)current+1;}}
+void jAudioMathMIDIProcessor::getStateInformation(juce::MemoryBlock&b){juce::MemoryOutputStream m(b,true);m.writeString(formulaText);m.writeFloat(bpm);}
+void jAudioMathMIDIProcessor::setStateInformation(const void*d,int n){juce::MemoryInputStream m(d,(size_t)n,false);formulaText=m.readString();formula.set(formulaText.toStdString());bpm=m.readFloat();}
+juce::AudioProcessor*JUCE_CALLTYPE createPluginFilter(){return new jAudioMathMIDIProcessor();}
